@@ -18,21 +18,14 @@ pip install write-pypistat
 ```python
 from writepypistat import WritePypiStat
 
-package = "ipyvizzu"
-outdir = "_stat_veghdev_write-pypistat" # optional
+package = "pypistats"
+outdir = "stats/pypistats"
 write_pypistat = WritePypiStat(package, outdir)
 
-write_pypistat.drop_percent_column = True
-write_pypistat.drop_total_row = True
-
-# stat_type: overall, python_major, python_minor, system
-write_pypistat.write_pypistat(stat_type="system")
-
-# date_period: None, month, day
-# start_date: 2022 | 2022-01 | 2022-01-01 -> 2022-01-01
-# end_date: 2022 | 2022-12 | 2022-12-31 -> 2022-12-31
-write_pypistat.write_pypistat(stat_type="overall", date_period="month", start_date="2022-01-01", end_date="2022")
+write_pypistat.write_pypistat("system", "month", "2022", "2022-03")
 ```
+
+Visit our [wiki](https://github.com/veghdev/write-pypistat/wiki) site for more details.
 
 # Contributing
 
