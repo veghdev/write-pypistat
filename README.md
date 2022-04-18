@@ -30,3 +30,7 @@ write_pypistat.write_pypistat(stat_type="system")
 # end_date: 2022 | 2022-12 | 2022-12-31 -> 2022-12-31
 write_pypistat.write_pypistat(stat_type="overall", date_period="month", start_date="2022-01-01", end_date="2022")
 ```
+
+# Contributing
+
+We welcome contributions to the project, visit our [contributing guide](https://github.com/veghdev/write-pypistat/blob/main/CONTRIBUTING.md) for further info.
