@@ -10,7 +10,7 @@ with open("README.md") as fp:
 setup(
     name="write-pypistat",
     version="0.1.0",
-    description="Filter and write pypi statistics",
+    description="write-pypistat makes it easy to collect, filter and save pypi statistics to csv files.",
     long_description=long_description,
     long_description_content_type="text/markdown",
     license="Apache 2.0",
