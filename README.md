@@ -3,7 +3,7 @@
 
 # About The Project
 
-write-pypistat collects, sorts and writes PyPI statistics into csv files or on the console.
+write-pypistat makes it easy to collect, filter and save pypi statistics to csv files.
 
 # Installation
 
