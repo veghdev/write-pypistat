@@ -38,6 +38,10 @@ write_pypistat.write_pypistat(stat_type="overall", date_period="month", start_da
 
 We welcome contributions to the project, visit our [contributing guide](https://github.com/veghdev/write-pypistat/blob/main/CONTRIBUTING.md) for further info.
 
+# Contact
+
+Join our Discussions page if you have any questions or comments: [Discussions](https://github.com/veghdev/write-pypistat/discussions)
+
 # License
 
 Copyright © 2022.
