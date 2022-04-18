@@ -17,13 +17,41 @@ class PypiStatType(enum.Enum):
 
 
 class WritePypiStat:
+    """
+    A class used to collect, filter and save pypi statistics to csv files.
+
+    Attributes
+    ----------
+    _package : str
+        name of the target pypi package
+    outdir : str, optional
+        path of the directory where the gathered data
+        will be saved into csv files (default None)
+    drop_percent_column : bool, optional
+        flag used to drop percent column (derived) from pypi statistics (default True)
+    drop_total_row : bool, optional
+        flag used to drop total row (derived) from pypi statistics (default True)
+
+    Methods
+    -------
+    get_pypistat(stat_type, start_date=None, end_date=None)
+        Returns the specified pypi statistics.
+
+    write_pypistat(stat_type, date_period=None, start_date=None, end_date=None)
+        Writes the specified pypi statistics.
+    """
+
     def __init__(self, package, outdir=None):
         """
-        :param str package: The name of the pypi package
-            (mandatory)
-        :param str outdir: The output directory of the csv files
-            (default: None)
+        Parameters
+        ----------
+        package : str
+            name of the target pypi package
+        outdir : str, optional
+            path of the directory where the gathered data
+            will be saved into csv files (default None)
         """
+
         self._package = package
         self._outdir = outdir
 
@@ -55,14 +83,41 @@ class WritePypiStat:
         self._drop_total_row = bool(drop_total_row)
 
     def get_pypistat(self, stat_type, start_date=None, end_date=None):
+        """Returns the specified pypi statistics.
+
+        Parameters
+        ----------
+        stat_type : enum
+            type of the statistics
+            (overall, python_major, python_minor, system)
+        start_date : str, optional
+            start date of the statistics, should be in one of the following formats:
+                "%Y", for example "2022"
+                    which means to be collected from "2022-01-01"
+                "%Y-%m", for example "2022-01"
+                    which means to be collected from "2022-01-01"
+                "%Y-%m-%d", for example "2022-01-01"
+                    which means to be collected from "2022-01-01"
+                None
+                    which means to be collected from the last available date
+            default (None)
+        end_date : str, optional
+            end date of the statistics, should be in one of the following formats:
+                "%Y", for example "2022"
+                    which means to be collected until "2022-12-31"
+                "%Y-%m", for example "2022-12"
+                    which means to be collected until "2022-12-31"
+                "%Y-%m-%d", for example "2022-12-31"
+                    which means to be collected until "2022-12-31"
+                None
+                    which means to be collected until the actual day
+            default (None)
+
+        Returns:
+        ----------
+        pandas.DataFrame: a pandas.DataFrame contains the gathered statistics
         """
-        :param enum stat_type: The type of the pypi statistics
-            (mandatory: overall, python_major, python_minor, system)
-        :param str start_date: Start date of the pypi statistics
-            (default: None)
-        :param str end_date: End date of the pypi statistics
-            (default: None)
-        """
+
         stat_date = StatDate(start=start_date, end=end_date)
         return self._get_pypistat(PypiStatType(stat_type).value, stat_date)
 
@@ -140,15 +195,39 @@ class WritePypiStat:
         start_date=None,
         end_date=None,
     ):
-        """
-        :param enum stat_type: The type of the pypi statistics
-            (mandatory: overall, python_major, python_minor, system)
-        :param enum date_period: Data grouping period.
-            (optional: day, month, None(default))
-        :param str start_date: Start date of the pypi statistics
-            (default: None)
-        :param str end_date: End date of the pypi statistics
-            (default: None)
+        """Writes the specified pypi statistics.
+
+        Parameters
+        ----------
+        stat_type : enum
+            type of the statistics
+            (overall, python_major, python_minor, system)
+        date_period : enum
+            grouping of the statistics
+            (day, month, None)
+            default (None)
+        start_date : str, optional
+            start date of the statistics, should be in one of the following formats:
+                "%Y", for example "2022"
+                    which means to be collected from "2022-01-01"
+                "%Y-%m", for example "2022-01"
+                    which means to be collected from "2022-01-01"
+                "%Y-%m-%d", for example "2022-01-01"
+                    which means to be collected from "2022-01-01"
+                None
+                    which means to be collected from the last available date
+            default (None)
+        end_date : str, optional
+            end date of the statistics, should be in one of the following formats:
+                "%Y", for example "2022"
+                    which means to be collected until "2022-12-31"
+                "%Y-%m", for example "2022-12"
+                    which means to be collected until "2022-12-31"
+                "%Y-%m-%d", for example "2022-12-31"
+                    which means to be collected until "2022-12-31"
+                None
+                    which means to be collected until the actual day
+            default (None)
         """
         stat_date = StatDate(
             period=StatPeriod(date_period), start=start_date, end=end_date
