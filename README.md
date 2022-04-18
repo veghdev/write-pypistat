@@ -1,3 +1,6 @@
+[![CI check](https://github.com/veghdev/write-pypistat/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/veghdev/write-pypistat/actions/workflows/ci.yml)
+
+
 # About The Project
 
 write-pypistat collects, sorts and writes PyPI statistics into csv files or on the console.
