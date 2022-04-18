@@ -1,4 +1,4 @@
-[![CI check](https://github.com/veghdev/write-pypistat/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/veghdev/write-pypistat/actions/workflows/ci.yml)
+[![CI](https://github.com/veghdev/write-pypistat/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/veghdev/write-pypistat/actions/workflows/ci.yml)
 
 
 # About The Project
