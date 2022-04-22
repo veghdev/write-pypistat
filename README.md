@@ -24,7 +24,6 @@ write_pypistat = WritePypiStat(package, outdir)
 
 write_pypistat.write_pypistat.write_pypistat(
     stat_type="system",
-    date_period="month",
     start_date="2022",
     end_date="2022-03",
 )
