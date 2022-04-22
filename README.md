@@ -33,7 +33,7 @@ Visit our [wiki](https://github.com/veghdev/write-pypistat/wiki) site for more d
 
 # Contributing
 
-We welcome contributions to the project, visit our [contributing guide](https://github.com/veghdev/write-pypistat/blob/main/CONTRIBUTING.md) for further info.
+We welcome contributions to the project, visit our [contributing](https://github.com/veghdev/write-pypistat/blob/main/CONTRIBUTING.md) guide for further info.
 
 # Contact
 
