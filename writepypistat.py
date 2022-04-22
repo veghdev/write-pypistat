@@ -4,6 +4,7 @@ import os
 from datetime import datetime, timedelta
 
 import pypistats
+import pandas as pd
 
 from statdate import StatPeriod, StatDate
 
@@ -27,6 +28,8 @@ class WritePypiStat:
     outdir : str, optional
         path of the directory where the gathered data
         will be saved into csv files (default None)
+    merge_stored_data: bool, optional
+        flag used to merge actual pypi statistics with previously stored (default True)
     drop_percent_column : bool, optional
         flag used to drop percent column (derived) from pypi statistics (default True)
     drop_total_row : bool, optional
@@ -55,6 +58,7 @@ class WritePypiStat:
         self._package = package
         self._outdir = outdir
 
+        self._merge_stored_data = True
         self._drop_percent_column = True
         self._drop_total_row = True
 
@@ -65,6 +69,14 @@ class WritePypiStat:
     @outdir.setter
     def outdir(self, outdir):
         self._outdir = outdir
+
+    @property
+    def merge_stored_data(self):
+        return self._merge_stored_data
+
+    @merge_stored_data.setter
+    def merge_stored_data(self, merge_stored_data):
+        self._merge_stored_data = bool(merge_stored_data)
 
     @property
     def drop_percent_column(self):
@@ -144,13 +156,33 @@ class WritePypiStat:
             stats = stats.head(-1)
         return stats
 
+    def _get_pypistat_by_none(self, stat_type, stat_date):
+        stats = []
+        stat_file = "pypistat" + "_" + stat_type + ".csv"
+        stat = self._get_pypistat(stat_type, stat_date)
+        if self.merge_stored_data:
+            stat = WritePypiStat._concat_with_stored_pypistat(
+                self._get_pypistat(stat_type, stat_date),
+                self._get_stored_pypistat(stat_file),
+            )
+        stats.append(
+            {
+                "stat": stat,
+                "stat_file": stat_file,
+            }
+        )
+        return stats
+
     def _get_pypistat_by_month(self, stat_type, start_date=None, end_date=None):
         stats = []
         time_delta = end_date - start_date
         months = []
-        tmp_start_date = start_date
+        actual_start_date = start_date
         for i in range(time_delta.days + 1):
             day = start_date + timedelta(days=i)
+            stat_file = (
+                day.strftime("%Y-%m") + "_" + "pypistat" + "_" + stat_type + ".csv"
+            )
             if day.month not in months:
                 months.append(day.month)
                 month_end = datetime(
@@ -158,22 +190,22 @@ class WritePypiStat:
                 )
                 tmp_end_date = month_end if month_end <= end_date else end_date
                 stat_date = StatDate(
-                    start=tmp_start_date.strftime("%Y-%m-%d"),
+                    start=actual_start_date.strftime("%Y-%m-%d"),
                     end=tmp_end_date.strftime("%Y-%m-%d"),
                 )
                 stat = self._get_pypistat(stat_type, stat_date)
+                if self.merge_stored_data:
+                    stat = WritePypiStat._concat_with_stored_pypistat(
+                        self._get_pypistat(stat_type, stat_date),
+                        self._get_stored_pypistat(stat_file),
+                    )
                 stats.append(
                     {
                         "stat": stat,
-                        "stat_file": day.strftime("%Y-%m")
-                        + "_"
-                        + "pypistat"
-                        + "_"
-                        + stat_type
-                        + ".csv",
+                        "stat_file": stat_file,
                     }
                 )
-                tmp_start_date = month_end + timedelta(days=1)
+                actual_start_date = month_end + timedelta(days=1)
         return stats
 
     def _get_pypistat_by_day(self, stat_type, start_date=None, end_date=None):
@@ -181,22 +213,45 @@ class WritePypiStat:
         time_delta = end_date - start_date
         for i in range(time_delta.days + 1):
             day = start_date + timedelta(days=i)
+            stat_file = (
+                day.strftime("%Y-%m-%d") + "_" + "pypistat" + "_" + stat_type + ".csv"
+            )
             stat_date = StatDate(
                 start=day.strftime("%Y-%m-%d"), end=day.strftime("%Y-%m-%d")
             )
             stat = self._get_pypistat(stat_type, stat_date)
+            if self.merge_stored_data:
+                stat = WritePypiStat._concat_with_stored_pypistat(
+                    self._get_pypistat(stat_type, stat_date),
+                    self._get_stored_pypistat(stat_file),
+                )
             stats.append(
                 {
                     "stat": stat,
-                    "stat_file": day.strftime("%Y-%m-%d")
-                    + "_"
-                    + "pypistat"
-                    + "_"
-                    + stat_type
-                    + ".csv",
+                    "stat_file": stat_file,
                 }
             )
         return stats
+
+    def _get_stored_pypistat(self, stat_file):
+        stat = None
+        if self.outdir:
+            stat_file_path = os.path.join(self.outdir, stat_file)
+            if os.path.exists(stat_file_path):
+                stat = pd.read_csv(stat_file_path)
+                stat.set_index("date", inplace=True)
+        return stat
+
+    @staticmethod
+    def _concat_with_stored_pypistat(stat, stat_stored):
+        if stat is not None:
+            from_index = stat.first_valid_index()
+            if stat_stored is not None:
+                stat_stored.drop(
+                    stat_stored.loc[stat_stored.index >= from_index].index, inplace=True
+                )
+            return pd.concat([stat_stored, stat])
+        return None
 
     def write_pypistat(
         self,
@@ -259,12 +314,7 @@ class WritePypiStat:
                 stat_type, stat_date.start, stat_date.end
             )
         else:
-            stats.append(
-                {
-                    "stat": self._get_pypistat(stat_type, stat_date),
-                    "stat_file": "pypistat" + "_" + stat_type + ".csv",
-                }
-            )
+            stats += self._get_pypistat_by_none(stat_type, stat_date)
 
         for stat in stats:
             self._write_pypistat(stat["stat"], stat["stat_file"])
