@@ -7,6 +7,7 @@ class StatPeriod(enum.Enum):
 
     DAY = "day"
     MONTH = "month"
+    YEAR = "year"
     NONE = None
 
 
