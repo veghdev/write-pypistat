@@ -45,7 +45,7 @@ class StatDate:
 
     @staticmethod
     def format_start(start):
-        time_delta_max = 180
+        time_delta_max = 181
         if start is None:
             time_delta = timedelta(days=time_delta_max)
             start = datetime.now() - time_delta
