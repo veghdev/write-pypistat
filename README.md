@@ -19,10 +19,15 @@ pip install write-pypistat
 from writepypistat import WritePypiStat
 
 package = "pypistats"
-outdir = "stats/pypistats"
+outdir = "stats/pypistat"
 write_pypistat = WritePypiStat(package, outdir)
 
-write_pypistat.write_pypistat("system", "month", "2022", "2022-03")
+write_pypistat.write_pypistat.write_pypistat(
+    stat_type="system",
+    date_period="month",
+    start_date="2022",
+    end_date="2022-03",
+)
 ```
 
 Visit our [wiki](https://github.com/veghdev/write-pypistat/wiki) site for more details.

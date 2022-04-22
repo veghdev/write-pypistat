@@ -165,7 +165,12 @@ class WritePypiStat:
                 stats.append(
                     {
                         "stat": stat,
-                        "stat_file": day.strftime("%Y-%m") + "_" + stat_type + ".csv",
+                        "stat_file": day.strftime("%Y-%m")
+                        + "_"
+                        + "pypistat"
+                        + "_"
+                        + stat_type
+                        + ".csv",
                     }
                 )
                 tmp_start_date = month_end + timedelta(days=1)
@@ -183,7 +188,12 @@ class WritePypiStat:
             stats.append(
                 {
                     "stat": stat,
-                    "stat_file": day.strftime("%Y-%m-%d") + "_" + stat_type + ".csv",
+                    "stat_file": day.strftime("%Y-%m-%d")
+                    + "_"
+                    + "pypistat"
+                    + "_"
+                    + stat_type
+                    + ".csv",
                 }
             )
         return stats
@@ -252,7 +262,7 @@ class WritePypiStat:
             stats.append(
                 {
                     "stat": self._get_pypistat(stat_type, stat_date),
-                    "stat_file": stat_type + ".csv",
+                    "stat_file": "pypistat" + "_" + stat_type + ".csv",
                 }
             )
 
