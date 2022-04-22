@@ -173,6 +173,37 @@ class WritePypiStat:
         )
         return stats
 
+    def _get_pypistat_by_year(self, stat_type, start_date=None, end_date=None):
+        stats = []
+        time_delta = end_date - start_date
+        years = []
+        actual_start_date = start_date
+        for i in range(time_delta.days + 1):
+            day = start_date + timedelta(days=i)
+            stat_file = day.strftime("%Y") + "_" + "pypistat" + "_" + stat_type + ".csv"
+            if day.year not in years:
+                years.append(day.year)
+                year_end = datetime(day.year, 12, 31)
+                tmp_end_date = year_end if year_end <= end_date else end_date
+                stat_date = StatDate(
+                    start=actual_start_date.strftime("%Y-%m-%d"),
+                    end=tmp_end_date.strftime("%Y-%m-%d"),
+                )
+                stat = self._get_pypistat(stat_type, stat_date)
+                if self.merge_stored_data:
+                    stat = WritePypiStat._concat_with_stored_pypistat(
+                        self._get_pypistat(stat_type, stat_date),
+                        self._get_stored_pypistat(stat_file),
+                    )
+                stats.append(
+                    {
+                        "stat": stat,
+                        "stat_file": stat_file,
+                    }
+                )
+                actual_start_date = year_end + timedelta(days=1)
+        return stats
+
     def _get_pypistat_by_month(self, stat_type, start_date=None, end_date=None):
         stats = []
         time_delta = end_date - start_date
@@ -269,7 +300,7 @@ class WritePypiStat:
             (overall, python_major, python_minor, system)
         date_period : enum
             grouping of the statistics
-            (day, month, None)
+            (day, month, year, None)
             default (None)
         start_date : str, optional
             start date of the statistics, should be in one of the following formats:
@@ -311,6 +342,10 @@ class WritePypiStat:
             )
         elif stat_date.period == StatPeriod.MONTH:
             stats += self._get_pypistat_by_month(
+                stat_type, stat_date.start, stat_date.end
+            )
+        elif stat_date.period == StatPeriod.YEAR:
+            stats += self._get_pypistat_by_year(
                 stat_type, stat_date.start, stat_date.end
             )
         else:
