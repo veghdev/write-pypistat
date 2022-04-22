@@ -37,7 +37,7 @@ We welcome contributions to the project, visit our [contributing](https://github
 
 # Contact
 
-Join our Discussions page if you have any questions or comments: [Discussions](https://github.com/veghdev/write-pypistat/discussions)
+Join our [discussions](https://github.com/veghdev/write-pypistat/discussions) page if you have any questions or comments.
 
 # License
 
