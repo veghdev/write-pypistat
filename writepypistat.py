@@ -28,6 +28,10 @@ class WritePypiStat:
     outdir : str, optional
         path of the directory where the gathered data
         will be saved into csv files (default None)
+    date_period : enum, optional
+        grouping of the statistics
+        (day, month, year, None)
+        default (year)
     merge_stored_data: bool, optional
         flag used to merge actual pypi statistics with previously stored (default True)
     drop_percent_column : bool, optional
@@ -40,7 +44,7 @@ class WritePypiStat:
     get_pypistat(stat_type, start_date=None, end_date=None)
         Returns the specified pypi statistics.
 
-    write_pypistat(stat_type, date_period=None, start_date=None, end_date=None)
+    write_pypistat(stat_type, start_date=None, end_date=None)
         Writes the specified pypi statistics.
     """
 
@@ -58,6 +62,8 @@ class WritePypiStat:
         self._package = package
         self._outdir = outdir
 
+        self._date_period = StatPeriod.YEAR
+
         self._merge_stored_data = True
         self._drop_percent_column = True
         self._drop_total_row = True
@@ -69,6 +75,14 @@ class WritePypiStat:
     @outdir.setter
     def outdir(self, outdir):
         self._outdir = outdir
+
+    @property
+    def date_period(self):
+        return self._date_period
+
+    @date_period.setter
+    def date_period(self, date_period):
+        self._date_period = StatPeriod(date_period)
 
     @property
     def merge_stored_data(self):
@@ -156,9 +170,10 @@ class WritePypiStat:
             stats = stats.head(-1)
         return stats
 
-    def _get_pypistat_by_none(self, stat_type, stat_date):
+    def _get_pypistat_by_none(self, stat_type, stat_date, postfix=None):
         stats = []
-        stat_file = "pypistat" + "_" + stat_type + ".csv"
+        stat_file = postfix if postfix is not None else "pypistat" + "_" + stat_type
+        stat_file += ".csv"
         stat = self._get_pypistat(stat_type, stat_date)
         if self.merge_stored_data:
             stat = WritePypiStat._concat_with_stored_pypistat(
@@ -173,21 +188,35 @@ class WritePypiStat:
         )
         return stats
 
-    def _get_pypistat_by_year(self, stat_type, start_date=None, end_date=None):
+    def _get_pypistat_by_year(
+        self, stat_type, start_date=None, end_date=None, postfix=None
+    ):
         stats = []
         time_delta = end_date - start_date
-        years = []
-        actual_start_date = start_date
+        tmp = {
+            "years": [],
+            "actual_start_date": start_date,
+            "actual_year_end": None,
+            "actual_end_date": None,
+        }
         for i in range(time_delta.days + 1):
             day = start_date + timedelta(days=i)
-            stat_file = day.strftime("%Y") + "_" + "pypistat" + "_" + stat_type + ".csv"
-            if day.year not in years:
-                years.append(day.year)
-                year_end = datetime(day.year, 12, 31)
-                tmp_end_date = year_end if year_end <= end_date else end_date
+            stat_file = day.strftime("%Y") + "_"
+            stat_file += (
+                postfix if postfix is not None else "pypistat" + "_" + stat_type
+            )
+            stat_file += ".csv"
+            if day.year not in tmp["years"]:
+                tmp["years"].append(day.year)
+                tmp["actual_year_end"] = datetime(day.year, 12, 31)
+                tmp["actual_end_date"] = (
+                    tmp["actual_year_end"]
+                    if tmp["actual_year_end"] <= end_date
+                    else end_date
+                )
                 stat_date = StatDate(
-                    start=actual_start_date.strftime("%Y-%m-%d"),
-                    end=tmp_end_date.strftime("%Y-%m-%d"),
+                    start=tmp["actual_start_date"].strftime("%Y-%m-%d"),
+                    end=tmp["actual_end_date"].strftime("%Y-%m-%d"),
                 )
                 stat = self._get_pypistat(stat_type, stat_date)
                 if self.merge_stored_data:
@@ -201,28 +230,40 @@ class WritePypiStat:
                         "stat_file": stat_file,
                     }
                 )
-                actual_start_date = year_end + timedelta(days=1)
+                tmp["actual_start_date"] = tmp["actual_year_end"] + timedelta(days=1)
         return stats
 
-    def _get_pypistat_by_month(self, stat_type, start_date=None, end_date=None):
+    def _get_pypistat_by_month(
+        self, stat_type, start_date=None, end_date=None, postfix=None
+    ):
         stats = []
         time_delta = end_date - start_date
-        months = []
-        actual_start_date = start_date
+        tmp = {
+            "months": [],
+            "actual_start_date": start_date,
+            "actual_month_end": None,
+            "actual_end_date": None,
+        }
         for i in range(time_delta.days + 1):
             day = start_date + timedelta(days=i)
-            stat_file = (
-                day.strftime("%Y-%m") + "_" + "pypistat" + "_" + stat_type + ".csv"
+            stat_file = day.strftime("%Y-%m") + "_"
+            stat_file += (
+                postfix if postfix is not None else "pypistat" + "_" + stat_type
             )
-            if day.month not in months:
-                months.append(day.month)
-                month_end = datetime(
+            stat_file += ".csv"
+            if day.month not in tmp["months"]:
+                tmp["months"].append(day.month)
+                tmp["actual_month_end"] = datetime(
                     day.year, day.month, calendar.monthrange(day.year, day.month)[1]
                 )
-                tmp_end_date = month_end if month_end <= end_date else end_date
+                tmp["actual_end_date"] = (
+                    tmp["actual_month_end"]
+                    if tmp["actual_month_end"] <= end_date
+                    else end_date
+                )
                 stat_date = StatDate(
-                    start=actual_start_date.strftime("%Y-%m-%d"),
-                    end=tmp_end_date.strftime("%Y-%m-%d"),
+                    start=tmp["actual_start_date"].strftime("%Y-%m-%d"),
+                    end=tmp["actual_end_date"].strftime("%Y-%m-%d"),
                 )
                 stat = self._get_pypistat(stat_type, stat_date)
                 if self.merge_stored_data:
@@ -236,17 +277,21 @@ class WritePypiStat:
                         "stat_file": stat_file,
                     }
                 )
-                actual_start_date = month_end + timedelta(days=1)
+                tmp["actual_start_date"] = tmp["actual_month_end"] + timedelta(days=1)
         return stats
 
-    def _get_pypistat_by_day(self, stat_type, start_date=None, end_date=None):
+    def _get_pypistat_by_day(
+        self, stat_type, start_date=None, end_date=None, postfix=None
+    ):
         stats = []
         time_delta = end_date - start_date
         for i in range(time_delta.days + 1):
             day = start_date + timedelta(days=i)
-            stat_file = (
-                day.strftime("%Y-%m-%d") + "_" + "pypistat" + "_" + stat_type + ".csv"
+            stat_file = day.strftime("%Y-%m-%d") + "_"
+            stat_file += (
+                postfix if postfix is not None else "pypistat" + "_" + stat_type
             )
+            stat_file += ".csv"
             stat_date = StatDate(
                 start=day.strftime("%Y-%m-%d"), end=day.strftime("%Y-%m-%d")
             )
@@ -287,9 +332,9 @@ class WritePypiStat:
     def write_pypistat(
         self,
         stat_type,
-        date_period=None,
         start_date=None,
         end_date=None,
+        postfix=None,
     ):
         """Writes the specified pypi statistics.
 
@@ -298,10 +343,6 @@ class WritePypiStat:
         stat_type : enum
             type of the statistics
             (overall, python_major, python_minor, system)
-        date_period : enum
-            grouping of the statistics
-            (day, month, year, None)
-            default (None)
         start_date : str, optional
             start date of the statistics, should be in one of the following formats:
                 "%Y", for example "2022"
@@ -324,32 +365,33 @@ class WritePypiStat:
                 None
                     which means to be collected until the actual day
             default (None)
+        postfix : str, optional
+            csv file's postfix
         """
-        stat_date = StatDate(
-            period=StatPeriod(date_period), start=start_date, end=end_date
-        )
-        self._write_pypistats(PypiStatType(stat_type).value, stat_date)
+        stat_date = StatDate(start=start_date, end=end_date)
+        self._write_pypistats(PypiStatType(stat_type).value, stat_date, postfix)
 
     def _write_pypistats(
         self,
         stat_type,
         stat_date,
+        postfix,
     ):
         stats = []
-        if stat_date.period == StatPeriod.DAY:
+        if self.date_period == StatPeriod.DAY:
             stats += self._get_pypistat_by_day(
-                stat_type, stat_date.start, stat_date.end
+                stat_type, stat_date.start, stat_date.end, postfix
             )
-        elif stat_date.period == StatPeriod.MONTH:
+        elif self.date_period == StatPeriod.MONTH:
             stats += self._get_pypistat_by_month(
-                stat_type, stat_date.start, stat_date.end
+                stat_type, stat_date.start, stat_date.end, postfix
             )
-        elif stat_date.period == StatPeriod.YEAR:
+        elif self.date_period == StatPeriod.YEAR:
             stats += self._get_pypistat_by_year(
-                stat_type, stat_date.start, stat_date.end
+                stat_type, stat_date.start, stat_date.end, postfix
             )
         else:
-            stats += self._get_pypistat_by_none(stat_type, stat_date)
+            stats += self._get_pypistat_by_none(stat_type, stat_date, postfix)
 
         for stat in stats:
             self._write_pypistat(stat["stat"], stat["stat_file"])

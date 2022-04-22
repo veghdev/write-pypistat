@@ -12,15 +12,10 @@ class StatPeriod(enum.Enum):
 
 
 class StatDate:
-    def __init__(self, period=None, start=None, end=None):
-        self._period = period
+    def __init__(self, start=None, end=None):
         self._start = StatDate.format_start(start)
         self._end = StatDate.format_end(end)
         assert self._start <= self._end, "start must be before end"
-
-    @property
-    def period(self):
-        return self._period
 
     @property
     def start(self):
