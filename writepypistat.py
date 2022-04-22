@@ -172,9 +172,7 @@ class WritePypiStat:
 
     def _get_pypistat_by_none(self, stat_type, stat_date, postfix=None):
         stats = []
-        stat_file = (
-            postfix if postfix is not None else "pypistat" + "_" + stat_type
-        )
+        stat_file = postfix if postfix is not None else "pypistat" + "_" + stat_type
         stat_file += ".csv"
         stat = self._get_pypistat(stat_type, stat_date)
         if self.merge_stored_data:
