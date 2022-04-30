@@ -37,7 +37,8 @@ write_pypistat.write_pypistat(
 )
 ```
 
-Visit our [wiki](https://github.com/veghdev/write-pypistat/wiki) site for more details.
+Visit our [documentation](https://veghdev.github.io/write-pypistat/) site for code reference or 
+our [wiki](https://github.com/veghdev/write-pypistat/wiki/) site for a step-by-step tutorial into write-pypistat.
 
 # Contributing
 
