@@ -25,20 +25,20 @@ class WritePypiStat:
     A class used to collect, filter and save pypi statistics to csv files
     """
 
-    def __init__(self, package, outdir=None):
+    def __init__(self, package_name, outdir=None):
         """
         Constructor of the WritePypiStat class
 
         Parameters
         ----------
-        package : str
+        package_name : str
             name of the target pypi package
         outdir : Union[str, NoneType], default None
             path of the directory where the gathered data
             will be saved into csv files
         """
 
-        self._package = package
+        self._package_name = package_name
         self._outdir = outdir
 
         self._date_period = StatPeriod.YEAR
@@ -177,7 +177,7 @@ class WritePypiStat:
         stats = None
         try:
             stats = method(
-                self._package,
+                self._package_name,
                 total=True,
                 start_date=stat_date.start.strftime("%Y-%m-%d"),
                 end_date=stat_date.end.strftime("%Y-%m-%d"),
