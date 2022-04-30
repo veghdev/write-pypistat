@@ -1,4 +1,4 @@
-.PHONY: install dev clean check format check-format lint
+.PHONY: install dev clean check format check-format lint docs
 
 VIRTUAL_ENV = .venv
 DEV_BUILD_FLAG = $(VIRTUAL_ENV)/DEV_BUILD_FLAG
@@ -35,3 +35,6 @@ lint: $(DEV_BUILD_FLAG)
 		--disable missing-module-docstring \
 		--disable too-few-public-methods \
 		src
+
+docs: $(DEV_BUILD_FLAG)
+	$(VIRTUAL_ENV)/bin/pdoc --docformat numpy src/write-pypistat -o docs

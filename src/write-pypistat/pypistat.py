@@ -6,10 +6,13 @@ from datetime import datetime, timedelta
 import pypistats
 import pandas as pd
 
-from statdate import StatPeriod, StatDate
+from .statdate import StatPeriod, StatDate
 
 
 class PypiStatType(enum.Enum):
+    """
+    A class used to store the types of pypi statistics
+    """
 
     OVERALL = "overall"
     PYTHON_MAJOR = "python_major"
@@ -19,44 +22,20 @@ class PypiStatType(enum.Enum):
 
 class WritePypiStat:
     """
-    A class used to collect, filter and save pypi statistics to csv files.
-
-    Attributes
-    ----------
-    _package : str
-        name of the target pypi package
-    outdir : str, optional
-        path of the directory where the gathered data
-        will be saved into csv files (default None)
-    date_period : enum, optional
-        grouping of the statistics
-        (day, month, year, None)
-        default (year)
-    merge_stored_data: bool, optional
-        flag used to merge actual pypi statistics with previously stored (default True)
-    drop_percent_column : bool, optional
-        flag used to drop percent column (derived) from pypi statistics (default True)
-    drop_total_row : bool, optional
-        flag used to drop total row (derived) from pypi statistics (default True)
-
-    Methods
-    -------
-    get_pypistat(stat_type, start_date=None, end_date=None)
-        Returns the specified pypi statistics.
-
-    write_pypistat(stat_type, start_date=None, end_date=None)
-        Writes the specified pypi statistics.
+    A class used to collect, filter and save pypi statistics to csv files
     """
 
     def __init__(self, package, outdir=None):
         """
+        Constructor of the WritePypiStat class
+
         Parameters
         ----------
         package : str
             name of the target pypi package
-        outdir : str, optional
+        outdir : Union[str, NoneType], default None
             path of the directory where the gathered data
-            will be saved into csv files (default None)
+            will be saved into csv files
         """
 
         self._package = package
@@ -70,6 +49,15 @@ class WritePypiStat:
 
     @property
     def outdir(self):
+        """
+        Property used to set outdir
+
+        Parameters
+        ----------
+        outdir : Union[str, NoneType], default None
+            path of the directory where the gathered data
+            will be saved into csv files
+        """
         return self._outdir
 
     @outdir.setter
@@ -78,6 +66,14 @@ class WritePypiStat:
 
     @property
     def date_period(self):
+        """
+        Property used to set date_period
+
+        Parameters
+        ----------
+        date_period : StatPeriod, default StatPeriod.YEAR
+            grouping of the statistics
+        """
         return self._date_period
 
     @date_period.setter
@@ -86,6 +82,14 @@ class WritePypiStat:
 
     @property
     def merge_stored_data(self):
+        """
+        Property used to set merge_stored_data
+
+        Parameters
+        ----------
+        merge_stored_data : bool, default True
+            flag used to merge actual pypi statistics with previously stored
+        """
         return self._merge_stored_data
 
     @merge_stored_data.setter
@@ -94,6 +98,14 @@ class WritePypiStat:
 
     @property
     def drop_percent_column(self):
+        """
+        Property used to set drop_percent_column
+
+        Parameters
+        ----------
+        drop_percent_column : bool, default True
+            flag used to drop percent column from pypi statistics
+        """
         return self._drop_percent_column
 
     @drop_percent_column.setter
@@ -102,6 +114,14 @@ class WritePypiStat:
 
     @property
     def drop_total_row(self):
+        """
+        Property used to set drop_total_row
+
+        Parameters
+        ----------
+        drop_total_row : bool, default True
+            flag used to drop total row from pypi statistics
+        """
         return self._drop_total_row
 
     @drop_total_row.setter
@@ -109,39 +129,44 @@ class WritePypiStat:
         self._drop_total_row = bool(drop_total_row)
 
     def get_pypistat(self, stat_type, start_date=None, end_date=None):
-        """Returns the specified pypi statistics.
+        """Returns the specified pypi statistics
 
         Parameters
         ----------
-        stat_type : enum
+        stat_type : PypiStatType
             type of the statistics
-            (overall, python_major, python_minor, system)
-        start_date : str, optional
+        start_date : Union[str, NoneType], default None
             start date of the statistics, should be in one of the following formats:
-                "%Y", for example "2022"
-                    which means to be collected from "2022-01-01"
-                "%Y-%m", for example "2022-01"
-                    which means to be collected from "2022-01-01"
-                "%Y-%m-%d", for example "2022-01-01"
-                    which means to be collected from "2022-01-01"
-                None
-                    which means to be collected from the last available date
-            default (None)
-        end_date : str, optional
-            end date of the statistics, should be in one of the following formats:
-                "%Y", for example "2022"
-                    which means to be collected until "2022-12-31"
-                "%Y-%m", for example "2022-12"
-                    which means to be collected until "2022-12-31"
-                "%Y-%m-%d", for example "2022-12-31"
-                    which means to be collected until "2022-12-31"
-                None
-                    which means to be collected until the actual day
-            default (None)
+                
+            - %Y, for example 2022
+                will be 2022-01-01
 
-        Returns:
-        ----------
-        pandas.DataFrame: a pandas.DataFrame contains the gathered statistics
+            - %Y-%m, for example 2022-01
+                will be 2022-01-01
+
+            - %Y-%m-%d, for example 2022-01-01
+                will be 2022-01-01
+
+            - None
+                will be the last available date
+        end_date : Union[str, NoneType], default None
+            end date of the statistics, should be in one of the following formats:
+                - %Y, for example 2022
+                    will be 2022-12-31
+
+                - %Y-%m, for example 2022-12
+                    will be 2022-12-31
+
+                - %Y-%m-%d, for example 2022-12-31
+                    will be 2022-12-31
+
+                - None
+                    will be the actual date
+
+        Returns
+        -------
+        pandas.DataFrame
+            the gathered pypi statistics
         """
 
         stat_date = StatDate(start=start_date, end=end_date)
@@ -336,37 +361,41 @@ class WritePypiStat:
         end_date=None,
         postfix=None,
     ):
-        """Writes the specified pypi statistics.
+        """Writes the specified pypi statistics
 
         Parameters
         ----------
-        stat_type : enum
+        stat_type : PypiStatType
             type of the statistics
-            (overall, python_major, python_minor, system)
-        start_date : str, optional
+        start_date : Union[str, NoneType], default None
             start date of the statistics, should be in one of the following formats:
-                "%Y", for example "2022"
-                    which means to be collected from "2022-01-01"
-                "%Y-%m", for example "2022-01"
-                    which means to be collected from "2022-01-01"
-                "%Y-%m-%d", for example "2022-01-01"
-                    which means to be collected from "2022-01-01"
-                None
-                    which means to be collected from the last available date
-            default (None)
-        end_date : str, optional
+                
+            - %Y, for example 2022
+                will be 2022-01-01
+
+            - %Y-%m, for example 2022-01
+                will be 2022-01-01
+
+            - %Y-%m-%d, for example 2022-01-01
+                will be 2022-01-01
+
+            - None
+                will be the last available date
+        end_date : Union[str, NoneType], default None
             end date of the statistics, should be in one of the following formats:
-                "%Y", for example "2022"
-                    which means to be collected until "2022-12-31"
-                "%Y-%m", for example "2022-12"
-                    which means to be collected until "2022-12-31"
-                "%Y-%m-%d", for example "2022-12-31"
-                    which means to be collected until "2022-12-31"
-                None
-                    which means to be collected until the actual day
-            default (None)
+                - %Y, for example 2022
+                    will be 2022-12-31
+
+                - %Y-%m, for example 2022-12
+                    will be 2022-12-31
+
+                - %Y-%m-%d, for example 2022-12-31
+                    will be 2022-12-31
+
+                - None
+                    will be the actual date
         postfix : str, optional
-            csv file's postfix
+            postfix of the csv file
         """
         stat_date = StatDate(start=start_date, end=end_date)
         self._write_pypistats(PypiStatType(stat_type).value, stat_date, postfix)

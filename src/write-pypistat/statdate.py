@@ -4,6 +4,9 @@ from datetime import datetime, timedelta
 
 
 class StatPeriod(enum.Enum):
+    """
+    A class used to store the grouping types for the statistics
+    """
 
     DAY = "day"
     MONTH = "month"
@@ -12,13 +15,39 @@ class StatPeriod(enum.Enum):
 
 
 class StatDate:
+    """
+    A class used to set and format the dates of the statistics
+    """
+
     def __init__(self, start=None, end=None):
+        """
+        Constructor of the StatDate class
+
+        Parameters
+        ----------
+        start : Union[str, NoneType], default None
+            start date for pypi statistics
+            (None means to be collected from the last available date)
+        end : Union[str, NoneType], default None
+            end date for pypi statistics
+            (None means to be collected until the actual day)
+        """
+
         self._start = StatDate.format_start(start)
         self._end = StatDate.format_end(end)
         assert self._start <= self._end, "start must be before end"
 
     @property
     def start(self):
+        """
+        Property used to start
+
+        Parameters
+        ----------
+        start : Union[str, NoneType], default None
+            start date for pypi statistics
+            (None means to be collected from the last available date)
+        """
         return self._start
 
     @start.setter
@@ -30,6 +59,15 @@ class StatDate:
 
     @property
     def end(self):
+        """
+        Property used to end
+
+        Parameters
+        ----------
+        end : Union[str, NoneType], default None
+            end date for pypi statistics
+            (None means to be collected until the actual day)
+        """
         return self._end
 
     @end.setter
@@ -41,6 +79,27 @@ class StatDate:
 
     @staticmethod
     def format_start(start):
+        """
+        Method used to format start date
+
+        - %Y, for example 2022
+            will be formatted to 2022-01-01
+
+        - %Y-%m, for example 2022-01
+            will be formatted to 2022-01-01
+
+        - %Y-%m-%d, for example 2022-01-01
+            will be formatted to 2022-01-01
+
+        - None
+            will be formatted to the last available date
+
+        Parameters
+        ----------
+        start : Union[str, NoneType]
+            start date for pypi statistics
+        """
+
         time_delta_max = 181
         if start is None:
             time_delta = timedelta(days=time_delta_max)
@@ -60,6 +119,27 @@ class StatDate:
 
     @staticmethod
     def format_end(end):
+        """
+        Method used to format end date
+
+        - %Y, for example 2022
+            will be formatted to 2022-12-31
+
+        - %Y-%m, for example 2022-12
+            will be formatted to 2022-12-31
+
+        - %Y-%m-%d, for example 2022-12-31
+            will be formatted to 2022-12-31
+
+        - None
+            will be formatted to the actual date
+
+        Parameters
+        ----------
+        end : Union[str, NoneType]
+            end date for pypi statistics
+        """
+
         if end is None:
             end = datetime.now()
         if isinstance(end, datetime):
