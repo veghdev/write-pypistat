@@ -137,7 +137,7 @@ class WritePypiStat:
             type of the statistics
         start_date : Union[str, NoneType], default None
             start date of the statistics, should be in one of the following formats:
-                
+
             - %Y, for example 2022
                 will be 2022-01-01
 
@@ -369,7 +369,7 @@ class WritePypiStat:
             type of the statistics
         start_date : Union[str, NoneType], default None
             start date of the statistics, should be in one of the following formats:
-                
+
             - %Y, for example 2022
                 will be 2022-01-01
 
