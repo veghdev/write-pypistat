@@ -23,10 +23,10 @@ requirements:
 check: check-format lint
 
 format: $(DEV_BUILD_FLAG)
-	$(VIRTUAL_ENV)/bin/black writepypistat.py statdate.py
+	$(VIRTUAL_ENV)/bin/black src
 
 check-format: $(DEV_BUILD_FLAG)
-	$(VIRTUAL_ENV)/bin/black --check writepypistat.py statdate.py
+	$(VIRTUAL_ENV)/bin/black --check src
 
 lint: $(DEV_BUILD_FLAG)
 	$(VIRTUAL_ENV)/bin/pylint \
@@ -34,4 +34,4 @@ lint: $(DEV_BUILD_FLAG)
 		--disable missing-class-docstring \
 		--disable missing-module-docstring \
 		--disable too-few-public-methods \
-		writepypistat.py statdate.py
+		src

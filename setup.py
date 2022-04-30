@@ -14,7 +14,7 @@ setup(
     long_description=long_description,
     long_description_content_type="text/markdown",
     license="Apache 2.0",
-    py_modules=["writepypistat", "statdate"],
+    py_modules=["src/writepypistat", "src/statdate"],
     python_requires=">=3.6",
     install_requires=requirements,
     url="https://github.com/veghdev/write-pypistat",
