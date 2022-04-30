@@ -1,3 +1,4 @@
+[![PyPI version](https://badge.fury.io/py/write-pypistat.svg)](https://badge.fury.io/py/write-pypistat)
 [![CI](https://github.com/veghdev/write-pypistat/workflows/CI/badge.svg?branch=main)](https://github.com/veghdev/write-pypistat/actions/workflows/ci.yml)
 
 
