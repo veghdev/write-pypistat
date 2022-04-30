@@ -25,24 +25,25 @@ class WritePypiStat:
     A class used to collect, filter and save pypi statistics to csv files
     """
 
-    def __init__(self, package, outdir=None):
+    def __init__(self, package_name, outdir=None):
         """
         Constructor of the WritePypiStat class
 
         Parameters
         ----------
-        package : str
+        package_name : str
             name of the target pypi package
         outdir : Union[str, NoneType], default None
             path of the directory where the gathered data
             will be saved into csv files
         """
 
-        self._package = package
+        self._package_name = package_name
         self._outdir = outdir
 
         self._date_period = StatPeriod.YEAR
 
+        self._write_package_name = False
         self._merge_stored_data = True
         self._drop_percent_column = True
         self._drop_total_row = True
@@ -79,6 +80,22 @@ class WritePypiStat:
     @date_period.setter
     def date_period(self, date_period):
         self._date_period = StatPeriod(date_period)
+
+    @property
+    def write_package_name(self):
+        """
+        Property used to set write_package_name
+
+        Parameters
+        ----------
+        write_package_name : bool, default False
+            flag used to write the name of the package into a csv column
+        """
+        return self._write_package_name
+
+    @write_package_name.setter
+    def write_package_name(self, write_package_name):
+        self._write_package_name = bool(write_package_name)
 
     @property
     def merge_stored_data(self):
@@ -177,7 +194,7 @@ class WritePypiStat:
         stats = None
         try:
             stats = method(
-                self._package,
+                self._package_name,
                 total=True,
                 start_date=stat_date.start.strftime("%Y-%m-%d"),
                 end_date=stat_date.end.strftime("%Y-%m-%d"),
@@ -193,6 +210,8 @@ class WritePypiStat:
         stats.sort_values(["date", "category"], inplace=True)
         if self.drop_total_row and stats.index[-1] is None:
             stats = stats.head(-1)
+        if self.write_package_name:
+            stats.insert(0, "package", self._package_name)
         return stats
 
     def _get_pypistat_by_none(self, stat_type, stat_date, postfix=None):

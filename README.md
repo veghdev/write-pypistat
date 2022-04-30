@@ -21,7 +21,7 @@ from writepypistat import WritePypiStat
 
 target_package = "pypistats"
 csv_dir = "stats/pypistats"
-write_pypistat = WritePypiStat(target_package, csv_dir)
+write_pypistat = WritePypiStat(package_name=target_package, outdir=csv_dir)
 
 write_pypistat.write_pypistat(
     stat_type="system",
