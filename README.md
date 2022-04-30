@@ -23,14 +23,14 @@ target_package = "pypistats"
 csv_dir = "stats/pypistats"
 write_pypistat = WritePypiStat(target_package, csv_dir)
 
-write_pypistat.write_pypistat.write_pypistat(
+write_pypistat.write_pypistat(
     stat_type="system",
     start_date="2021",
     end_date="2022-03",
 )
 
 write_pypistat.date_period = "month"
-write_pypistat.write_pypistat.write_pypistat(
+write_pypistat.write_pypistat(
     stat_type="overall",
     start_date="2022-01",
     end_date="2022-04-15",
