@@ -25,6 +25,8 @@ class WritePypiStat:
     A class used to collect, filter and save pypi statistics to csv files
     """
 
+    # pylint: disable=too-many-instance-attributes
+
     def __init__(self, package_name, outdir=None):
         """
         Constructor of the WritePypiStat class
@@ -45,6 +47,7 @@ class WritePypiStat:
 
         self._write_package_name = False
         self._merge_stored_data = True
+        self._fill_no_data = True
         self._drop_percent_column = True
         self._drop_total_row = True
 
@@ -112,6 +115,22 @@ class WritePypiStat:
     @merge_stored_data.setter
     def merge_stored_data(self, merge_stored_data):
         self._merge_stored_data = bool(merge_stored_data)
+
+    @property
+    def fill_no_data(self):
+        """
+        Property used to set fill_no_data
+
+        Parameters
+        ----------
+        fill_no_data : bool, default True
+            flag used to create empty lines with 0 download when data is not available
+        """
+        return self._fill_no_data
+
+    @fill_no_data.setter
+    def fill_no_data(self, fill_no_data):
+        self._fill_no_data = bool(fill_no_data)
 
     @property
     def drop_percent_column(self):
@@ -206,12 +225,13 @@ class WritePypiStat:
             return stats
         if self.drop_percent_column:
             stats.drop(["percent"], inplace=True, axis=1, errors="ignore")
-        stats.set_index("date", inplace=True)
         stats.sort_values(["date", "category"], inplace=True)
-        if self.drop_total_row and stats.index[-1] is None:
+        if self.drop_total_row and stats.iloc[-1]["date"] is None:
             stats = stats.head(-1)
         if self.write_package_name:
             stats.insert(0, "package", self._package_name)
+        date_index = stats.pop("date")
+        stats.insert(0, date_index.name, date_index)
         return stats
 
     def _get_pypistat_by_none(self, stat_type, stat_date, postfix=None):
@@ -221,15 +241,15 @@ class WritePypiStat:
         stat = self._get_pypistat(stat_type, stat_date)
         if self.merge_stored_data:
             stat = WritePypiStat._concat_with_stored_pypistat(
-                self._get_pypistat(stat_type, stat_date),
+                stat,
                 self._get_stored_pypistat(stat_file),
+                ["date", "package", "category"]
+                if self.write_package_name
+                else ["date", "category"],
             )
-        stats.append(
-            {
-                "stat": stat,
-                "stat_file": stat_file,
-            }
-        )
+        if self.fill_no_data:
+            stat = self._concat_with_no_data(stat, stat_date)
+        stats.append({"stat": stat, "stat_file": stat_file})
         return stats
 
     def _get_pypistat_by_year(
@@ -265,15 +285,15 @@ class WritePypiStat:
                 stat = self._get_pypistat(stat_type, stat_date)
                 if self.merge_stored_data:
                     stat = WritePypiStat._concat_with_stored_pypistat(
-                        self._get_pypistat(stat_type, stat_date),
+                        stat,
                         self._get_stored_pypistat(stat_file),
+                        ["date", "package", "category"]
+                        if self.write_package_name
+                        else ["date", "category"],
                     )
-                stats.append(
-                    {
-                        "stat": stat,
-                        "stat_file": stat_file,
-                    }
-                )
+                if self.fill_no_data:
+                    stat = self._concat_with_no_data(stat, stat_date)
+                stats.append({"stat": stat, "stat_file": stat_file})
                 tmp["actual_start_date"] = tmp["actual_year_end"] + timedelta(days=1)
         return stats
 
@@ -312,9 +332,14 @@ class WritePypiStat:
                 stat = self._get_pypistat(stat_type, stat_date)
                 if self.merge_stored_data:
                     stat = WritePypiStat._concat_with_stored_pypistat(
-                        self._get_pypistat(stat_type, stat_date),
+                        stat,
                         self._get_stored_pypistat(stat_file),
+                        ["date", "package", "category"]
+                        if self.write_package_name
+                        else ["date", "category"],
                     )
+                if self.fill_no_data:
+                    stat = self._concat_with_no_data(stat, stat_date)
                 stats.append(
                     {
                         "stat": stat,
@@ -342,9 +367,14 @@ class WritePypiStat:
             stat = self._get_pypistat(stat_type, stat_date)
             if self.merge_stored_data:
                 stat = WritePypiStat._concat_with_stored_pypistat(
-                    self._get_pypistat(stat_type, stat_date),
+                    stat,
                     self._get_stored_pypistat(stat_file),
+                    ["date", "package", "category"]
+                    if self.write_package_name
+                    else ["date", "category"],
                 )
+            if self.fill_no_data:
+                stat = self._concat_with_no_data(stat, stat_date)
             stats.append(
                 {
                     "stat": stat,
@@ -359,19 +389,69 @@ class WritePypiStat:
             stat_file_path = os.path.join(self.outdir, stat_file)
             if os.path.exists(stat_file_path):
                 stat = pd.read_csv(stat_file_path)
-                stat.set_index("date", inplace=True)
         return stat
 
     @staticmethod
-    def _concat_with_stored_pypistat(stat, stat_stored):
+    def _concat_with_stored_pypistat(stat, stat_stored, keys):
+
+        if stat is None:
+            return stat_stored
+        if stat_stored is None:
+            return stat
+
+        stat.fillna("null", axis=1, inplace=True)
+        stat_stored.fillna("null", axis=1, inplace=True)
+
+        stat = WritePypiStat._merge_data_frames(stat, stat_stored, keys)
+
+        return stat
+
+    @staticmethod
+    def _get_days(stat_date):
+        days = []
+        time_delta = stat_date.end - stat_date.start
+        for i in range(time_delta.days + 1):
+            day = stat_date.start + timedelta(days=i)
+            days.append(day.strftime("%Y-%m-%d"))
+        return days
+
+    def _concat_with_no_data(self, stat, stat_date):
+        days = WritePypiStat._get_days(stat_date)
+
+        no_data = {
+            "date": days,
+            "package": self._package_name,
+            "category": "null",
+            "downloads": 0,
+        }
+
+        if not self.write_package_name:
+            del no_data["package"]
+
         if stat is not None:
-            from_index = stat.first_valid_index()
-            if stat_stored is not None:
-                stat_stored.drop(
-                    stat_stored.loc[stat_stored.index >= from_index].index, inplace=True
-                )
-            return pd.concat([stat_stored, stat])
-        return None
+            del no_data["category"]
+            no_data = pd.DataFrame(data=no_data)
+            no_data = WritePypiStat._merge_data_frames(
+                stat,
+                no_data,
+                ["date", "package"] if self.write_package_name else ["date"],
+            )
+            no_data.fillna("null", axis=1, inplace=True)
+        else:
+            no_data = pd.DataFrame(data=no_data)
+
+        return no_data
+
+    @staticmethod
+    def _merge_data_frames(df1, df2, keys):
+        merged = pd.merge(df1, df2, how="outer", on=[*keys])
+        merged.sort_values([*keys], inplace=True)
+        if "downloads_y" in merged.columns:
+            merged.rename(columns={"downloads_x": "downloads"}, inplace=True)
+            merged.rename(columns={"downloads_y": "downloads_x"}, inplace=True)
+        merged.downloads.fillna(merged.downloads_x, inplace=True)
+        merged.drop(["downloads_x"], inplace=True, axis=1, errors="ignore")
+        return merged
 
     def write_pypistat(
         self,
@@ -442,13 +522,13 @@ class WritePypiStat:
             stats += self._get_pypistat_by_none(stat_type, stat_date, postfix)
 
         for stat in stats:
-            self._write_pypistat(stat["stat"], stat["stat_file"])
+            self._write_csv(stat["stat"], stat["stat_file"])
 
-    def _write_pypistat(self, stat, stat_file):
+    def _write_csv(self, stat, stat_file):
         if stat is not None:
-            print(stat)
             if self.outdir:
                 os.makedirs(self.outdir, exist_ok=True)
+                stat["downloads"] = stat["downloads"].astype(int)
                 stat.to_csv(
-                    os.path.join(self.outdir, stat_file), index=True, encoding="utf-8"
+                    os.path.join(self.outdir, stat_file), index=False, encoding="utf-8"
                 )
