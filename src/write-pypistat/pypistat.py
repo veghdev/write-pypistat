@@ -5,6 +5,7 @@ from datetime import datetime, timedelta
 
 import pypistats
 import pandas as pd
+import numpy as np
 
 from .statdate import StatPeriod, StatDate
 
@@ -232,6 +233,7 @@ class WritePypiStat:
             stats.insert(0, "package", self._package_name)
         date_index = stats.pop("date")
         stats.insert(0, date_index.name, date_index)
+        stats = WritePypiStat._set_data_frame_columns(stats)
         return stats
 
     def _get_pypistat_by_none(self, stat_type, stat_date, postfix=None):
@@ -388,7 +390,10 @@ class WritePypiStat:
         if self.outdir:
             stat_file_path = os.path.join(self.outdir, stat_file)
             if os.path.exists(stat_file_path):
-                stat = pd.read_csv(stat_file_path)
+                stat = pd.read_csv(
+                    stat_file_path, dtype={"downloads": int, "category": str}
+                )
+                stat = WritePypiStat._set_data_frame_columns(stat)
         return stat
 
     @staticmethod
@@ -398,9 +403,6 @@ class WritePypiStat:
             return stat_stored
         if stat_stored is None:
             return stat
-
-        stat.fillna("null", axis=1, inplace=True)
-        stat_stored.fillna("null", axis=1, inplace=True)
 
         stat = WritePypiStat._merge_data_frames(stat, stat_stored, keys)
 
@@ -421,7 +423,7 @@ class WritePypiStat:
         no_data = {
             "date": days,
             "package": self._package_name,
-            "category": "null",
+            "category": np.nan,
             "downloads": 0,
         }
 
@@ -436,15 +438,19 @@ class WritePypiStat:
                 no_data,
                 ["date", "package"] if self.write_package_name else ["date"],
             )
-            no_data.fillna("null", axis=1, inplace=True)
         else:
             no_data = pd.DataFrame(data=no_data)
+            no_data = WritePypiStat._set_data_frame_columns(no_data)
 
         return no_data
 
     @staticmethod
-    def _merge_data_frames(df1, df2, keys):
-        merged = pd.merge(df1, df2, how="outer", on=[*keys])
+    def _merge_data_frames(dataf1, dataf2, keys):
+        dataf1 = dataf1.replace("null", np.nan)
+        dataf1 = dataf1.replace("nan", np.nan)
+        dataf2 = dataf2.replace("null", np.nan)
+        dataf2 = dataf2.replace("nan", np.nan)
+        merged = pd.merge(dataf1, dataf2, how="outer", on=[*keys])
         merged.sort_values([*keys], inplace=True)
         if "downloads_y" in merged.columns:
             merged.rename(columns={"downloads_x": "downloads"}, inplace=True)
@@ -452,6 +458,15 @@ class WritePypiStat:
         merged.downloads.fillna(merged.downloads_x, inplace=True)
         merged.drop(["downloads_x"], inplace=True, axis=1, errors="ignore")
         return merged
+
+    @staticmethod
+    def _set_data_frame_columns(dataf):
+        for col in dataf.columns:
+            if col != "downloads":
+                dataf[col] = dataf[col].astype(str)
+            else:
+                dataf[col] = dataf[col].astype(int)
+        return dataf
 
     def write_pypistat(
         self,
@@ -528,7 +543,8 @@ class WritePypiStat:
         if stat is not None:
             if self.outdir:
                 os.makedirs(self.outdir, exist_ok=True)
-                stat["downloads"] = stat["downloads"].astype(int)
+                stat = WritePypiStat._set_data_frame_columns(stat)
+                stat = stat.drop_duplicates()
                 stat.to_csv(
                     os.path.join(self.outdir, stat_file), index=False, encoding="utf-8"
                 )
