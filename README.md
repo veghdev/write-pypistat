@@ -8,7 +8,7 @@ write-pypistat makes it easy to collect, filter and save pypi statistics to csv 
 
 # Installation
 
-write-pypistat requires `pypistats` and `pandas` packages.
+write-pypistat requires `pypistats`, `numpy` and `pandas` packages.
 
 ```sh
 pip install write-pypistat
