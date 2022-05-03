@@ -44,22 +44,14 @@ make lint
 
 write-pypistat is distributed on pypi.
 
-## Version number
-
-If your changes are ready to release, you should increase the version number in
-`setup.py`. The version bump should be in a separated commit.
-
-```sh
-git commit -m 'setup.py: version x.y.z' setup.py
-```
-
-Tag this commit:
-
-```sh
-git tag x.y.z
-```
-
 ## Changes
+
+If your changes are ready to release, you should increase the version number in `setup.py`. The version bump should be in a separated commit 
+and the commit message should be in the following format:
+
+```
+'setup.py: version x.y.z'
+```
 
 New release should be created on [github](https://github.com/veghdev/write-pypistat/releases/new).
 
