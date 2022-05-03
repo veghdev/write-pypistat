@@ -468,6 +468,15 @@ class WritePypiStat:
                 dataf[col] = dataf[col].astype(int)
         return dataf
 
+    @staticmethod
+    def _filter_data_frame_rows(stat):
+        stat = WritePypiStat._set_data_frame_columns(stat)
+        stat = stat.drop_duplicates()
+        df_zero = stat[stat["downloads"] == 0]
+        df_no_zero = stat[stat["downloads"] != 0]
+        stat = stat.drop(df_zero.index[df_zero["date"].isin(df_no_zero["date"])])
+        return stat
+
     def write_pypistat(
         self,
         stat_type,
@@ -543,8 +552,7 @@ class WritePypiStat:
         if stat is not None:
             if self.outdir:
                 os.makedirs(self.outdir, exist_ok=True)
-                stat = WritePypiStat._set_data_frame_columns(stat)
-                stat = stat.drop_duplicates()
+                stat = WritePypiStat._filter_data_frame_rows(stat)
                 stat.to_csv(
                     os.path.join(self.outdir, stat_file), index=False, encoding="utf-8"
                 )
