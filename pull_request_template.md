@@ -2,11 +2,7 @@
 
 ## Describe your changes
 
-## Type of change
+## Type of change (Please delete options that are not relevant)
 
-Please delete options that are not relevant.
+- [x] Documentation/CI update
 
-- [ ] Documentation/CI update
-- [ ] Bug fix (non-breaking change which fixes an issue)
-- [ ] New feature (non-breaking change which adds functionality)
-- [ ] Breaking change (fix or feature that would cause existing functionality to not work as expected)
