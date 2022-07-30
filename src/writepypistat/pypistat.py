@@ -1,19 +1,21 @@
+"""A module for working with pypi statistics."""
+
 import calendar
-import enum
+from enum import Enum
 import os
 from datetime import datetime, timedelta
+from typing import Optional, Union, List, Dict
+from os import PathLike
 
-import pypistats
-import pandas as pd
+import pypistats  # type: ignore
+import pandas as pd  # type: ignore
 import numpy as np
 
 from .statdate import StatPeriod, StatDate
 
 
-class PypiStatType(enum.Enum):
-    """
-    A class used to store the types of pypi statistics
-    """
+class PypiStatType(Enum):
+    """A class for storing the pypi statistic types."""
 
     OVERALL = "overall"
     PYTHON_MAJOR = "python_major"
@@ -23,22 +25,19 @@ class PypiStatType(enum.Enum):
 
 class WritePypiStat:
     """
-    A class used to collect, filter and save pypi statistics to csv files
+    A class for collecting, filtering and saving pypi statistics to csv files.
     """
 
     # pylint: disable=too-many-instance-attributes
 
-    def __init__(self, package_name, outdir=None):
+    def __init__(self, package_name: str, outdir: Optional[PathLike] = None):
         """
-        Constructor of the WritePypiStat class
+        WritePypiStat constructor.
 
-        Parameters
-        ----------
-        package_name : str
-            name of the target pypi package
-        outdir : Union[str, NoneType], default None
-            path of the directory where the gathered data
-            will be saved into csv files
+        Args:
+            package_name: Name of the target pypi package.
+            outdir (optional): Path of the directory where the gathered data
+                will be saved into csv files.
         """
 
         self._package_name = package_name
@@ -53,163 +52,131 @@ class WritePypiStat:
         self._drop_total_row = True
 
     @property
-    def outdir(self):
+    def outdir(self) -> Optional[PathLike]:
         """
-        Property used to set outdir
+        A property for storing outdir.
 
-        Parameters
-        ----------
-        outdir : Union[str, NoneType], default None
-            path of the directory where the gathered data
-            will be saved into csv files
+        Path of the directory where the gathered data will be saved into csv files.
         """
+
         return self._outdir
 
     @outdir.setter
-    def outdir(self, outdir):
+    def outdir(self, outdir: Optional[PathLike] = None) -> None:
         self._outdir = outdir
 
     @property
-    def date_period(self):
+    def date_period(self) -> StatPeriod:
         """
-        Property used to set date_period
+        A property for storing date_period that is
+        the time period of the statistics.
+        """
 
-        Parameters
-        ----------
-        date_period : StatPeriod, default StatPeriod.YEAR
-            grouping of the statistics
-        """
         return self._date_period
 
     @date_period.setter
-    def date_period(self, date_period):
+    def date_period(self, date_period: StatPeriod = StatPeriod.YEAR) -> None:
         self._date_period = StatPeriod(date_period)
 
     @property
-    def write_package_name(self):
+    def write_package_name(self) -> bool:
         """
-        Property used to set write_package_name
+        A property for storing write_package_name that is
+        a flag for writing the name of the package into a csv column.
+        """
 
-        Parameters
-        ----------
-        write_package_name : bool, default False
-            flag used to write the name of the package into a csv column
-        """
         return self._write_package_name
 
     @write_package_name.setter
-    def write_package_name(self, write_package_name):
+    def write_package_name(self, write_package_name: bool = False):
         self._write_package_name = bool(write_package_name)
 
     @property
-    def merge_stored_data(self):
+    def merge_stored_data(self) -> bool:
         """
-        Property used to set merge_stored_data
+        A property for storing merge_stored_data that is
+        a flag for merging actual pypi statistics with previously stored.
+        """
 
-        Parameters
-        ----------
-        merge_stored_data : bool, default True
-            flag used to merge actual pypi statistics with previously stored
-        """
         return self._merge_stored_data
 
     @merge_stored_data.setter
-    def merge_stored_data(self, merge_stored_data):
+    def merge_stored_data(self, merge_stored_data: bool = True):
         self._merge_stored_data = bool(merge_stored_data)
 
     @property
-    def fill_no_data(self):
+    def fill_no_data(self) -> bool:
         """
-        Property used to set fill_no_data
+        A property for storing fill_no_data that is
+        a flag for creating empty lines with 0 download when data is not available.
+        """
 
-        Parameters
-        ----------
-        fill_no_data : bool, default True
-            flag used to create empty lines with 0 download when data is not available
-        """
         return self._fill_no_data
 
     @fill_no_data.setter
-    def fill_no_data(self, fill_no_data):
+    def fill_no_data(self, fill_no_data: bool = True):
         self._fill_no_data = bool(fill_no_data)
 
     @property
-    def drop_percent_column(self):
+    def drop_percent_column(self) -> bool:
         """
-        Property used to set drop_percent_column
+        A property for storing drop_percent_column that is
+        a flag for dropping percent column from pypi statistics.
+        """
 
-        Parameters
-        ----------
-        drop_percent_column : bool, default True
-            flag used to drop percent column from pypi statistics
-        """
         return self._drop_percent_column
 
     @drop_percent_column.setter
-    def drop_percent_column(self, drop_percent_column):
+    def drop_percent_column(self, drop_percent_column: bool = True):
         self._drop_percent_column = bool(drop_percent_column)
 
     @property
-    def drop_total_row(self):
+    def drop_total_row(self) -> bool:
         """
-        Property used to set drop_total_row
+        A property for storing drop_total_row that is
+        a flag for dropping total row from pypi statistics.
+        """
 
-        Parameters
-        ----------
-        drop_total_row : bool, default True
-            flag used to drop total row from pypi statistics
-        """
         return self._drop_total_row
 
     @drop_total_row.setter
-    def drop_total_row(self, drop_total_row):
+    def drop_total_row(self, drop_total_row: bool = True):
         self._drop_total_row = bool(drop_total_row)
 
-    def get_pypistat(self, stat_type, start_date=None, end_date=None):
-        """Returns the specified pypi statistics
+    def get_pypistat(
+        self,
+        stat_type: Union[PypiStatType, str],
+        start_date: Optional[str] = None,
+        end_date: Optional[str] = None,
+    ) -> Optional[pd.DataFrame]:
+        """
+        Returns pypi statistics.
 
-        Parameters
-        ----------
-        stat_type : PypiStatType
-            type of the statistics
-        start_date : Union[str, NoneType], default None
-            start date of the statistics, should be in one of the following formats:
+        Args:
+            stat_type: Type of the statistics.
+            start_date (optional): Start date of the statistics,
+                should be in one of the following formats:
+                - %Y, for example 2022 will be 2022-01-01.
+                - %Y-%m, for example 2022-01 will be 2022-01-01.
+                - %Y-%m-%d, for example 2022-01-01 will be 2022-01-01.
+                - None will be the earliest available date.
+            end_date (optional): End date of the statistics,
+                should be in one of the following formats:
+                - %Y, for example 2022 will be 2022-12-31.
+                - %Y-%m, for example 2022-12 will be 2022-12-31.
+                - %Y-%m-%d, for example 2022-12-31 will be 2022-12-31.
+                - None will be the actual date.
 
-            - %Y, for example 2022
-                will be 2022-01-01
-
-            - %Y-%m, for example 2022-01
-                will be 2022-01-01
-
-            - %Y-%m-%d, for example 2022-01-01
-                will be 2022-01-01
-
-            - None
-                will be the last available date
-        end_date : Union[str, NoneType], default None
-            end date of the statistics, should be in one of the following formats:
-                - %Y, for example 2022
-                    will be 2022-12-31
-
-                - %Y-%m, for example 2022-12
-                    will be 2022-12-31
-
-                - %Y-%m-%d, for example 2022-12-31
-                    will be 2022-12-31
-
-                - None
-                    will be the actual date
-
-        Returns
-        -------
-        pandas.DataFrame
-            the gathered pypi statistics
+        Returns:
+            The gathered pypi statistics.
         """
 
         stat_date = StatDate(start=start_date, end=end_date)
         return self._get_pypistat(PypiStatType(stat_type).value, stat_date)
 
-    def _get_pypistat(self, stat_type, stat_date):
+    def _get_pypistat(
+        self, stat_type: str, stat_date: StatDate
+    ) -> Optional[pd.DataFrame]:
         method = getattr(pypistats, stat_type)
         stats = None
         try:
@@ -236,7 +203,9 @@ class WritePypiStat:
         stats = WritePypiStat._set_data_frame_columns(stats)
         return stats
 
-    def _get_pypistat_by_none(self, stat_type, stat_date, postfix=None):
+    def _get_pypistat_by_none(
+        self, stat_type: str, stat_date: StatDate, postfix: Optional[str] = None
+    ) -> List[Dict[str, Union[str, pd.DataFrame, None]]]:
         stats = []
         stat_file = postfix if postfix is not None else "pypistat" + "_" + stat_type
         stat_file += ".csv"
@@ -255,34 +224,33 @@ class WritePypiStat:
         return stats
 
     def _get_pypistat_by_year(
-        self, stat_type, start_date=None, end_date=None, postfix=None
-    ):
+        self,
+        stat_type: str,
+        start_date: datetime,
+        end_date: datetime,
+        postfix: Optional[str] = None,
+    ) -> List[Dict[str, Union[str, pd.DataFrame, None]]]:
         stats = []
-        time_delta = end_date - start_date
-        tmp = {
-            "years": [],
-            "actual_start_date": start_date,
-            "actual_year_end": None,
-            "actual_end_date": None,
-        }
-        for i in range(time_delta.days + 1):
+        years = []
+        actual_start_date = start_date
+        actual_year_end = None
+        actual_end_date = None
+        for i in range((end_date - start_date).days + 1):
             day = start_date + timedelta(days=i)
             stat_file = day.strftime("%Y") + "_"
             stat_file += (
                 postfix if postfix is not None else "pypistat" + "_" + stat_type
             )
             stat_file += ".csv"
-            if day.year not in tmp["years"]:
-                tmp["years"].append(day.year)
-                tmp["actual_year_end"] = datetime(day.year, 12, 31)
-                tmp["actual_end_date"] = (
-                    tmp["actual_year_end"]
-                    if tmp["actual_year_end"] <= end_date
-                    else end_date
+            if day.year not in years:
+                years.append(day.year)
+                actual_year_end = datetime(day.year, 12, 31)
+                actual_end_date = (
+                    actual_year_end if actual_year_end <= end_date else end_date
                 )
                 stat_date = StatDate(
-                    start=tmp["actual_start_date"].strftime("%Y-%m-%d"),
-                    end=tmp["actual_end_date"].strftime("%Y-%m-%d"),
+                    start=actual_start_date.strftime("%Y-%m-%d"),
+                    end=actual_end_date.strftime("%Y-%m-%d"),
                 )
                 stat = self._get_pypistat(stat_type, stat_date)
                 if self.merge_stored_data:
@@ -296,40 +264,39 @@ class WritePypiStat:
                 if self.fill_no_data:
                     stat = self._concat_with_no_data(stat, stat_date)
                 stats.append({"stat": stat, "stat_file": stat_file})
-                tmp["actual_start_date"] = tmp["actual_year_end"] + timedelta(days=1)
+                actual_start_date = actual_year_end + timedelta(days=1)
         return stats
 
     def _get_pypistat_by_month(
-        self, stat_type, start_date=None, end_date=None, postfix=None
-    ):
+        self,
+        stat_type: str,
+        start_date: datetime,
+        end_date: datetime,
+        postfix: Optional[str] = None,
+    ) -> List[Dict[str, Union[str, pd.DataFrame, None]]]:
         stats = []
-        time_delta = end_date - start_date
-        tmp = {
-            "months": [],
-            "actual_start_date": start_date,
-            "actual_month_end": None,
-            "actual_end_date": None,
-        }
-        for i in range(time_delta.days + 1):
+        months = []
+        actual_start_date = start_date
+        actual_month_end = None
+        actual_end_date = None
+        for i in range((end_date - start_date).days + 1):
             day = start_date + timedelta(days=i)
             stat_file = day.strftime("%Y-%m") + "_"
             stat_file += (
                 postfix if postfix is not None else "pypistat" + "_" + stat_type
             )
             stat_file += ".csv"
-            if day.month not in tmp["months"]:
-                tmp["months"].append(day.month)
-                tmp["actual_month_end"] = datetime(
+            if day.month not in months:
+                months.append(day.month)
+                actual_month_end = datetime(
                     day.year, day.month, calendar.monthrange(day.year, day.month)[1]
                 )
-                tmp["actual_end_date"] = (
-                    tmp["actual_month_end"]
-                    if tmp["actual_month_end"] <= end_date
-                    else end_date
+                actual_end_date = (
+                    actual_month_end if actual_month_end <= end_date else end_date
                 )
                 stat_date = StatDate(
-                    start=tmp["actual_start_date"].strftime("%Y-%m-%d"),
-                    end=tmp["actual_end_date"].strftime("%Y-%m-%d"),
+                    start=actual_start_date.strftime("%Y-%m-%d"),
+                    end=actual_end_date.strftime("%Y-%m-%d"),
                 )
                 stat = self._get_pypistat(stat_type, stat_date)
                 if self.merge_stored_data:
@@ -348,15 +315,18 @@ class WritePypiStat:
                         "stat_file": stat_file,
                     }
                 )
-                tmp["actual_start_date"] = tmp["actual_month_end"] + timedelta(days=1)
+                actual_start_date = actual_month_end + timedelta(days=1)
         return stats
 
     def _get_pypistat_by_day(
-        self, stat_type, start_date=None, end_date=None, postfix=None
-    ):
+        self,
+        stat_type: str,
+        start_date: datetime,
+        end_date: datetime,
+        postfix: Optional[str] = None,
+    ) -> List[Dict]:
         stats = []
-        time_delta = end_date - start_date
-        for i in range(time_delta.days + 1):
+        for i in range((end_date - start_date).days + 1):
             day = start_date + timedelta(days=i)
             stat_file = day.strftime("%Y-%m-%d") + "_"
             stat_file += (
@@ -385,7 +355,7 @@ class WritePypiStat:
             )
         return stats
 
-    def _get_stored_pypistat(self, stat_file):
+    def _get_stored_pypistat(self, stat_file: str) -> Optional[pd.DataFrame]:
         stat = None
         if self.outdir:
             stat_file_path = os.path.join(self.outdir, stat_file)
@@ -397,7 +367,11 @@ class WritePypiStat:
         return stat
 
     @staticmethod
-    def _concat_with_stored_pypistat(stat, stat_stored, keys):
+    def _concat_with_stored_pypistat(
+        stat: Optional[pd.DataFrame],
+        stat_stored: Optional[pd.DataFrame],
+        keys: List[str],
+    ) -> Optional[pd.DataFrame]:
 
         if stat is None:
             return stat_stored
@@ -409,15 +383,16 @@ class WritePypiStat:
         return stat
 
     @staticmethod
-    def _get_days(stat_date):
+    def _get_days(stat_date: StatDate) -> List[str]:
         days = []
-        time_delta = stat_date.end - stat_date.start
-        for i in range(time_delta.days + 1):
+        for i in range((stat_date.end - stat_date.start).days + 1):
             day = stat_date.start + timedelta(days=i)
             days.append(day.strftime("%Y-%m-%d"))
         return days
 
-    def _concat_with_no_data(self, stat, stat_date):
+    def _concat_with_no_data(
+        self, stat: Optional[pd.DataFrame], stat_date: StatDate
+    ) -> pd.DataFrame:
         days = WritePypiStat._get_days(stat_date)
 
         no_data = {
@@ -432,20 +407,22 @@ class WritePypiStat:
 
         if stat is not None:
             del no_data["category"]
-            no_data = pd.DataFrame(data=no_data)
-            no_data = WritePypiStat._merge_data_frames(
+            no_data_df = pd.DataFrame(data=no_data)
+            no_data_df = WritePypiStat._merge_data_frames(
                 stat,
-                no_data,
+                no_data_df,
                 ["date", "package"] if self.write_package_name else ["date"],
             )
         else:
-            no_data = pd.DataFrame(data=no_data)
-            no_data = WritePypiStat._set_data_frame_columns(no_data)
+            no_data_df = pd.DataFrame(data=no_data)
+            no_data_df = WritePypiStat._set_data_frame_columns(no_data_df)
 
-        return no_data
+        return no_data_df
 
     @staticmethod
-    def _merge_data_frames(dataf1, dataf2, keys):
+    def _merge_data_frames(
+        dataf1: pd.DataFrame, dataf2: pd.DataFrame, keys: List[str]
+    ) -> pd.DataFrame:
         dataf1 = dataf1.replace("null", np.nan)
         dataf1 = dataf1.replace("nan", np.nan)
         dataf2 = dataf2.replace("null", np.nan)
@@ -460,7 +437,7 @@ class WritePypiStat:
         return merged
 
     @staticmethod
-    def _set_data_frame_columns(dataf):
+    def _set_data_frame_columns(dataf: pd.DataFrame) -> pd.DataFrame:
         for col in dataf.columns:
             if col != "downloads":
                 dataf[col] = dataf[col].astype(str)
@@ -469,7 +446,7 @@ class WritePypiStat:
         return dataf
 
     @staticmethod
-    def _filter_data_frame_rows(stat):
+    def _filter_data_frame_rows(stat: pd.DataFrame) -> pd.DataFrame:
         stat = WritePypiStat._set_data_frame_columns(stat)
         stat = stat.drop_duplicates()
         df_zero = stat[stat["downloads"] == 0]
@@ -479,56 +456,40 @@ class WritePypiStat:
 
     def write_pypistat(
         self,
-        stat_type,
-        start_date=None,
-        end_date=None,
-        postfix=None,
-    ):
-        """Writes the specified pypi statistics
-
-        Parameters
-        ----------
-        stat_type : PypiStatType
-            type of the statistics
-        start_date : Union[str, NoneType], default None
-            start date of the statistics, should be in one of the following formats:
-
-            - %Y, for example 2022
-                will be 2022-01-01
-
-            - %Y-%m, for example 2022-01
-                will be 2022-01-01
-
-            - %Y-%m-%d, for example 2022-01-01
-                will be 2022-01-01
-
-            - None
-                will be the last available date
-        end_date : Union[str, NoneType], default None
-            end date of the statistics, should be in one of the following formats:
-                - %Y, for example 2022
-                    will be 2022-12-31
-
-                - %Y-%m, for example 2022-12
-                    will be 2022-12-31
-
-                - %Y-%m-%d, for example 2022-12-31
-                    will be 2022-12-31
-
-                - None
-                    will be the actual date
-        postfix : str, optional
-            postfix of the csv file
+        stat_type: Union[PypiStatType, str],
+        start_date: Optional[str] = None,
+        end_date: Optional[str] = None,
+        postfix: Optional[str] = None,
+    ) -> None:
         """
+        Writes pypi statistics into csv files.
+
+        Args:
+            stat_type: Type of the statistics.
+            start_date (optional): Start date of the statistics,
+                should be in one of the following formats:
+                - %Y, for example 2022 will be 2022-01-01.
+                - %Y-%m, for example 2022-01 will be 2022-01-01.
+                - %Y-%m-%d, for example 2022-01-01 will be 2022-01-01.
+                - None will be the earliest available date.
+            end_date (optional): End date of the statistics,
+                should be in one of the following formats:
+                - %Y, for example 2022 will be 2022-12-31.
+                - %Y-%m, for example 2022-12 will be 2022-12-31.
+                - %Y-%m-%d, for example 2022-12-31 will be 2022-12-31.
+                - None will be the actual date.
+            postfix (optional): Postfix of the csv files.
+        """
+
         stat_date = StatDate(start=start_date, end=end_date)
         self._write_pypistats(PypiStatType(stat_type).value, stat_date, postfix)
 
     def _write_pypistats(
         self,
-        stat_type,
-        stat_date,
-        postfix,
-    ):
+        stat_type: str,
+        stat_date: StatDate,
+        postfix: Optional[str],
+    ) -> None:
         stats = []
         if self.date_period == StatPeriod.DAY:
             stats += self._get_pypistat_by_day(
@@ -548,7 +509,7 @@ class WritePypiStat:
         for stat in stats:
             self._write_csv(stat["stat"], stat["stat_file"])
 
-    def _write_csv(self, stat, stat_file):
+    def _write_csv(self, stat: Optional[pd.DataFrame], stat_file: str) -> None:
         if stat is not None:
             if self.outdir:
                 os.makedirs(self.outdir, exist_ok=True)

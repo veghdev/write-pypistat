@@ -1,3 +1,7 @@
+pip-tools
+pre-commit
 black
 pylint
+mypy
 pdoc
+twine
