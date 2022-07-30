@@ -1,3 +1,6 @@
+pip-tools
 black
 pylint
+mypy
 pdoc
+twine

@@ -1,12 +1,14 @@
+"""A module for working with statistics time."""
+
+
 import calendar
-import enum
+from enum import Enum
+from typing import Optional, Union
 from datetime import datetime, timedelta
 
 
-class StatPeriod(enum.Enum):
-    """
-    A class used to store the grouping types for the statistics
-    """
+class StatPeriod(Enum):
+    """A class for storing the statistic time periods."""
 
     DAY = "day"
     MONTH = "month"
@@ -16,21 +18,22 @@ class StatPeriod(enum.Enum):
 
 class StatDate:
     """
-    A class used to set and format the dates of the statistics
+    A class for formatting and calculating the start and end dates of the statistics.
     """
 
-    def __init__(self, start=None, end=None):
+    def __init__(
+        self,
+        start: Optional[Union[str, datetime]] = None,
+        end: Optional[Union[str, datetime]] = None,
+    ):
         """
-        Constructor of the StatDate class
+        StatDate constructor.
 
-        Parameters
-        ----------
-        start : Union[str, NoneType], default None
-            start date for pypi statistics
-            (None means to be collected from the last available date)
-        end : Union[str, NoneType], default None
-            end date for pypi statistics
-            (None means to be collected until the actual day)
+        Args:
+            start (optional): Start date for pypi statistics.
+                If not set, statistics are collected from the earliest available day.
+            end (optional): End date for pypi statistics.
+                If not set, statistics are collected until the actual day.
         """
 
         self._start = StatDate.format_start(start)
@@ -38,66 +41,70 @@ class StatDate:
         assert self._start <= self._end, "start must be before end"
 
     @property
-    def start(self):
+    def start(self) -> datetime:
         """
-        Property used to start
+        A property for storing the start date.
 
-        Parameters
-        ----------
-        start : Union[str, NoneType], default None
-            start date for pypi statistics
-            (None means to be collected from the last available date)
+        Note:
+            If not set, statistics are collected from the earliest available day.
+
+        Raises:
+            AssertionError: If `start` is before `end`.
         """
+
         return self._start
 
     @start.setter
-    def start(self, start):
+    def start(self, start: Optional[Union[str, datetime]] = None) -> None:
         start = StatDate.format_start(start)
         if self.end and start:
             assert start <= self.end, "start must be before end"
         self._start = start
 
     @property
-    def end(self):
+    def end(self) -> datetime:
         """
-        Property used to end
+        A property for storing the end date.
 
-        Parameters
-        ----------
-        end : Union[str, NoneType], default None
-            end date for pypi statistics
-            (None means to be collected until the actual day)
+        Note:
+            If not set, statistics are collected until the actual day.
+
+        Raises:
+            AssertionError: If `start` is before `end`.
         """
+
         return self._end
 
     @end.setter
-    def end(self, end):
+    def end(self, end: Optional[Union[str, datetime]] = None) -> None:
         end = StatDate.format_end(end)
         if self.start and end:
             assert self.start <= end, "start must be before end"
         self._end = end
 
     @staticmethod
-    def format_start(start):
+    def format_start(start: Optional[Union[str, datetime]] = None) -> datetime:
         """
-        Method used to format start date
+        A method for formatting the start date.
 
-        - %Y, for example 2022
-            will be formatted to 2022-01-01
+        Args:
+            start (optional): Start date for pypi statistics.
 
-        - %Y-%m, for example 2022-01
-            will be formatted to 2022-01-01
+        Note:
+            - %Y, for example 2022
+                will be formatted to 2022-01-01.
+            - %Y-%m, for example 2022-01
+                will be formatted to 2022-01-01.
+            - %Y-%m-%d, for example 2022-01-01
+                will be formatted to 2022-01-01.
+            - None
+                will be formatted to the earliest available date.
 
-        - %Y-%m-%d, for example 2022-01-01
-            will be formatted to 2022-01-01
+        Returns:
+            The formatted start date object.
 
-        - None
-            will be formatted to the last available date
-
-        Parameters
-        ----------
-        start : Union[str, NoneType]
-            start date for pypi statistics
+        Raises:
+            ValueError: If `start` can not be formatted.
         """
 
         time_delta_max = 181
@@ -118,26 +125,28 @@ class StatDate:
         return datetime.strptime(start, "%Y-%m-%d")
 
     @staticmethod
-    def format_end(end):
+    def format_end(end: Optional[Union[str, datetime]] = None) -> datetime:
         """
-        Method used to format end date
+        A method for formatting the end date.
 
-        - %Y, for example 2022
-            will be formatted to 2022-12-31
+        Args:
+            end (optional): End date for pypi statistics.
 
-        - %Y-%m, for example 2022-12
-            will be formatted to 2022-12-31
+        Note:
+            - %Y, for example 2022
+                will be formatted to 2022-12-31.
+            - %Y-%m, for example 2022-12
+                will be formatted to 2022-12-31.
+            - %Y-%m-%d, for example 2022-12-31
+                will be formatted to 2022-12-31.
+            - None
+                will be formatted to the actual date.
 
-        - %Y-%m-%d, for example 2022-12-31
-            will be formatted to 2022-12-31
+        Returns:
+            The formatted end date object.
 
-        - None
-            will be formatted to the actual date
-
-        Parameters
-        ----------
-        end : Union[str, NoneType]
-            end date for pypi statistics
+        Raises:
+            ValueError: If `end` can not be formatted.
         """
 
         if end is None:

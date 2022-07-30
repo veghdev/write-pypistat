@@ -1,21 +1,27 @@
-#!/usr/bin/env python3
-from setuptools import setup
+"""
+write-pypistat
+write-pypistat makes it easy to collect, filter and save pypi statistics to csv files.
+"""
 
-with open("requirements.txt") as fp:
+from setuptools import setup  # type: ignore
+
+with open("requirements.txt", encoding="utf8") as fp:
     requirements = fp.read().splitlines()
 
-with open("README.md") as fp:
+with open("README.md", encoding="utf8") as fp:
     long_description = fp.read()
 
 setup(
     name="write-pypistat",
     version="0.5.2",
-    description="write-pypistat makes it easy to collect, filter and save pypi statistics to csv files.",
+    description=(
+        "write-pypistat makes it easy to collect, filter and save pypi statistics to csv files."
+    ),
     long_description=long_description,
     long_description_content_type="text/markdown",
     license="Apache 2.0",
     packages=["writepypistat"],
-    package_dir={'writepypistat': 'src/write-pypistat'},
+    package_dir={"writepypistat": "src/writepypistat"},
     python_requires=">=3.6",
     install_requires=requirements,
     url="https://github.com/veghdev/write-pypistat",
