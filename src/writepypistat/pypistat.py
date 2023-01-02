@@ -425,8 +425,10 @@ class WritePypiStat:
     ) -> pd.DataFrame:
         dataf1 = dataf1.replace("null", np.nan)
         dataf1 = dataf1.replace("nan", np.nan)
+        dataf1 = WritePypiStat._set_data_frame_columns(dataf1)
         dataf2 = dataf2.replace("null", np.nan)
         dataf2 = dataf2.replace("nan", np.nan)
+        dataf2 = WritePypiStat._set_data_frame_columns(dataf2)
         merged = pd.merge(dataf1, dataf2, how="outer", on=[*keys])
         merged.sort_values([*keys], inplace=True)
         if "downloads_y" in merged.columns:
