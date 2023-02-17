@@ -372,7 +372,6 @@ class WritePypiStat:
         stat_stored: Optional[pd.DataFrame],
         keys: List[str],
     ) -> Optional[pd.DataFrame]:
-
         if stat is None:
             return stat_stored
         if stat_stored is None:
